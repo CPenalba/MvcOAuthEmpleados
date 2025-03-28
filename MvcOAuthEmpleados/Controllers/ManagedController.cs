@@ -33,9 +33,31 @@ namespace MvcOAuthEmpleados.Controllers
             {
                 ViewData["MENSAJE"] = "Ya tienes tu Token!!!!";
                 HttpContext.Session.SetString("TOKEN", token);
-                return View();
-            }
+                ClaimsIdentity identity = new ClaimsIdentity(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    ClaimTypes.Name, ClaimTypes.Role);
+                //ALMACENAMOS EL NOMBRE DEL USUARIO (BONITO)
+                identity.AddClaim(new Claim(ClaimTypes.Name, model.UserName));
+                //EN ESTE EJEMPLO, ALMACENAMOS EL ID (PASSWORD)
+                identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, model.Password));
+                identity.AddClaim(new Claim("TOKEN", token));
+                ClaimsPrincipal userPrincipal = new ClaimsPrincipal(identity);
+                //EL USUARIO ESTARA DADO DE ALTA 30 MINUTOS, LO MISMO QUE SESSION
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+                    userPrincipal, new AuthenticationProperties
+                    {
+                        ExpiresUtc = DateTime.UtcNow.AddMinutes(30)
+                    });
 
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Index", "Home");
         }
     }
 }
+

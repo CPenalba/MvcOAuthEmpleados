@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MvcOAuthEmpleados.Filters;
 using MvcOAuthEmpleados.Models;
 using MvcOAuthEmpleados.Services;
 
@@ -12,6 +13,7 @@ namespace MvcOAuthEmpleados.Controllers
             this.service = service;
         }
 
+        [AuthorizeEmpleados]
         public async Task<IActionResult> Index()
         {
             List<Empleado> empleados = await this.service.GetEmpleadosAsync();
@@ -20,18 +22,24 @@ namespace MvcOAuthEmpleados.Controllers
 
         public async Task<IActionResult> Details(int id)
         {
-            //TENDREMOS EL TOKEN EN SESSION
-            string token = HttpContext.Session.GetString("TOKEN");
-            if (token == null)
-            {
-                ViewData["MENSAJE"] = "Debe validarse en Login";
-                return View();
-            }
-            else
-            {
-                Empleado emp = await this.service.FindEmpleadoAsync(id, token);
-                return View(emp);
-            }
+            Empleado emp = await this.service.FindEmpleadoAsync(id);
+            return View(emp);
+        }
+
+        [AuthorizeEmpleados]
+        public async Task<IActionResult> Perfil()
+        {
+
+            Empleado emp = await this.service.GetPerfilAsync();
+            return View(emp);
+        }
+
+        [AuthorizeEmpleados]
+        public async Task<IActionResult> Compis()
+        {
+
+            List<Empleado> emps = await this.service.GetCompisAsync();
+            return View(emps);
         }
     }
 }

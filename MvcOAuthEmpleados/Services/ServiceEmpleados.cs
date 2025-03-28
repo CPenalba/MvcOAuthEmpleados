@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
+using Microsoft.AspNetCore.Http;
 
 namespace MvcOAuthEmpleados.Services
 {
@@ -10,11 +11,13 @@ namespace MvcOAuthEmpleados.Services
     {
         private string UrlApi;
         private MediaTypeWithQualityHeaderValue Header;
+        private IHttpContextAccessor httpContextAccessor;
 
-        public ServiceEmpleados(IConfiguration configuration)
+        public ServiceEmpleados(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             this.UrlApi = configuration.GetValue<string>("ApiUrls:ApiEmpleados");
             this.Header = new MediaTypeWithQualityHeaderValue("application/json");
+            this.httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<string> GetTokenAsync(string userName, string password)
@@ -98,12 +101,28 @@ namespace MvcOAuthEmpleados.Services
 
         //ALAMCENAREMOS EL TOKEN EN SESSION
         //POR AHORA RECIBIREMOS EL TOKEN EN EL METODO 
-        public async Task<Empleado> FindEmpleadoAsync(int idEmpleado, string token)
+        public async Task<Empleado> FindEmpleadoAsync(int idEmpleado)
         {
+            string token = this.httpContextAccessor.HttpContext.User.FindFirst(x => x.Type == "TOKEN").Value;
             string request = "api/empleados/" + idEmpleado;
             Empleado empleado = await this.CallApiAsync<Empleado>(request, token);
             return empleado;
         }
 
+        public async Task<Empleado> GetPerfilAsync()
+        {
+            string token = this.httpContextAccessor.HttpContext.User.FindFirst(x => x.Type == "TOKEN").Value;
+            string request = "api/empleados/perfil";
+            Empleado empleado = await this.CallApiAsync<Empleado>(request, token);
+            return empleado;
+        }
+
+        public async Task<List<Empleado>> GetCompisAsync()
+        {
+            string token = this.httpContextAccessor.HttpContext.User.FindFirst(x => x.Type == "TOKEN").Value;
+            string request = "api/empleados/compis";
+            List<Empleado> compis = await this.CallApiAsync<List<Empleado>>(request, token);
+            return compis;
+        }
     }
 }
